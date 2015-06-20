@@ -1,11 +1,13 @@
 #BC_Vector_iter.py
 #This module contains the script to create a vector "D" containing a Dirichlet boundary condition for this system. 
 
-from Parameters_iter import nx, dt, dx, UL, UR, UnL, UnR, D
+from Parameters_iter import nx, dt, dx, UL, UR, UnL, UnR, vis, vis_sec
 import numpy as np
 from scipy.sparse import csr_matrix
 
-def BC_matrix_gen(nx, dt, dx, UL, UR, UnL, UnR, D):
+
+def BC_matrix_gen(nx, dt, dx, UL, UR, UnL, UnR, vis, vis_sec):
+    D = vis
     a, b = np.split(D, 2)#spit D into a vis and avis_sec array
     vis_values = a[0]
     vis_sec_values = b[0]
@@ -52,4 +54,4 @@ def BC_matrix_gen(nx, dt, dx, UL, UR, UnL, UnR, D):
     result = (bc_matrix, bc_sec_matrix, Dsp_matrix, D_secsp_matrix)
     return result
 print 'boundary condition generated'
-result = BC_matrix_gen(nx, dt, dx, UL, UR, UnL, UnR, D)
+result = BC_matrix_gen(nx, dt, dx, UL, UR, UnL, UnR, vis, vis_sec)
