@@ -61,34 +61,6 @@ def static_parameters():
     UnR = 1
     return L, nx, nt, dt, dx, UL, UR, UnL, UnR
 
-#for the given input of pressure and temperature, finds a value of viscosity
-
-def diffusion_magnitudes():
-    L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
-    temperatures, pressures = conditions_set()
-    #Water Concentration (weight percent)
-    W = 0.1669364#not sure if this is the correct value!!!
-    #mass slection coefficent
-    E = 0.43
-    for i in range(len(temperatures)):
-        #Temperature (Kelvin)
-        T = temperatures[i]
-        #Pressure (MPa)
-        P = pressures[i]
-        #diffusivities for 40Ar, 39Ar, 38Ar, 37Ar, 36Ar
-        dif_40 = (np.exp((14.627-17913/T-2.569*P/T)+(35936/T+27.42*P/T)*W))*10**-12
-        dif_39 = dif_40*(40.0/39.0)**(E/2.0)
-        dif_38 = dif_40*(40.0/38.0)**(E/2.0)
-        dif_37 = dif_40*(40.0/37.0)**(E/2.0)
-        dif_36 = dif_40*(40.0/36.0)**(E/2.0)
-        #stability criterion beta ...what is the stability criterion anyway?
-        beta_40 = dif_40*dt/(dx*dx)
-        beta_39 = dif_39*dt/(dx*dx)
-        beta_38 = dif_38*dt/(dx*dx)
-        beta_37 = dif_37*dt/(dx*dx)
-        beta_36 = dif_36*dt/(dx*dx)
-    return dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36
-
 #sets up a mesh for the model
 
 def drange(start, stop, step):
@@ -104,13 +76,11 @@ def grid_maker():
     ["%g" % x for x in drange(0.0, L, dx)]
     for x in drange(0.0, L, dx):
         gridx.append(x+L/(nx*2))   
-
+    return gridx
 #sets up the boundary condition vector
 
 def BC_matrix_gen():
     dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36 = diffusion_magnitudes()    
-    vis = dif_40
-    vis_sec = diff_36
     L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
     bc_40 = np.zeros([nx-2, 1])
     bc_39 = np.zeros([nx-2, 1])
@@ -179,3 +149,73 @@ def BC_matrix_gen():
     D_36_sp = csr_matrix(np.identity(nx-2) - (dif_36*dt/dx**2)*B)
     return D_40_sp, D_39_sp, D_38_sp, D_37_sp, D_36_sp, bc_40, bc_39, bc_38, bc_37, bc_36
 
+#sets the intial condition (currently set to the empty condition, rather than the step function)
+
+def initial_condition():
+    gridx = grid_maker()
+    L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
+    condition = np.zeros([nx, 2])
+    condition[:, 1] = np.array(gridx)
+    gridu = []
+    for i in gridx:
+        if i >= L/2:
+            #u = 1.0
+            u = 0.0
+        else:
+            u = 0.0
+        gridu.append(u)
+    condition[:, 0] = np.array(gridu)
+    return condition
+
+print initial_condition()
+#calculation set
+
+def Calculator(Dsp, bc, nx, nt, UL, UR, dx, UnL, UnR, dt):
+    L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
+    D_40_sp, D_39_sp, D_38_sp, D_37_sp, D_36_sp, bc_40, bc_39, bc_38, bc_37, bc_36 = BC_matrix_gen()
+    condition = initial_condition()
+    u = (condition[:, 0])
+    for timestep in range(0, nt):
+        #print timestep
+        if u[5] + u[1]/100. > u[nx-9] - u[nx-9]/100.:
+            #print 'Runtime to equilibrium is ', timestep*dt, ' seconds ', 'or ', timestep*dt/60./60., ' hours.'
+        #if u[1] > 0.00001:
+        #    print 'Optimal runtime is', timestep*dt, 'seconds.'
+            return (u, timestep * dt)
+        U = u
+        U = np.delete(U, [0, nx-1], axis = 0)
+        U = U + bc
+        U = sp.sparse.linalg.spsolve(Dsp, U.T).T
+        u = np.append(np.append(U, UR)[::-1], UL)[::-1]
+        #u = np.append(np.append(U, U[0]-UnL*dx)[::-1], U[nx-3]+UnR*dx)[::-1]
+    return (u, nt * dt)
+
+#iterator and plotting function
+#for the given input of pressure and temperature, finds a value of viscosity
+
+def diffusion_magnitudes():
+    L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
+    temperatures, pressures = conditions_set()
+    #Water Concentration (weight percent)
+    W = 0.1669364#not sure if this is the correct value!!!
+    #mass slection coefficent
+    E = 0.43
+    for i in range(len(temperatures)):
+        #Temperature (Kelvin)
+        T = temperatures[i]
+        #Pressure (MPa)
+        P = pressures[i]
+        #diffusivities for 40Ar, 39Ar, 38Ar, 37Ar, 36Ar
+        dif_40 = (np.exp((14.627-17913/T-2.569*P/T)+(35936/T+27.42*P/T)*W))*10**-12
+        dif_39 = dif_40*(40.0/39.0)**(E/2.0)
+        dif_38 = dif_40*(40.0/38.0)**(E/2.0)
+        dif_37 = dif_40*(40.0/37.0)**(E/2.0)
+        dif_36 = dif_40*(40.0/36.0)**(E/2.0)
+        #stability criterion beta ...what is the stability criterion anyway?
+        beta_40 = dif_40*dt/(dx*dx)
+        beta_39 = dif_39*dt/(dx*dx)
+        beta_38 = dif_38*dt/(dx*dx)
+        beta_37 = dif_37*dt/(dx*dx)
+        beta_36 = dif_36*dt/(dx*dx)
+        u, time_to_stop = Calculator(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36)
+    return dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36

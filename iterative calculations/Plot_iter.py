@@ -8,7 +8,6 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import matplotlib as pp
 
-
 def temperature_set():
     temperature_low = 900
     temperature_high = 1100
@@ -33,7 +32,7 @@ def conditions_set():
     for j in range(len(pressure_vector)):
         pressure_array[:,j] = pressure_vector[j]
     return temperature_array, pressure_array
-print conditions_set()
+
 
 
 
