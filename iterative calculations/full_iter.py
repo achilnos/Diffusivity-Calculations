@@ -1,4 +1,4 @@
-#full_iterative
+#full_iter.py
 
 
 import numpy as np
@@ -87,8 +87,7 @@ def diffusion_magnitudes():
         beta_38 = dif_38*dt/(dx*dx)
         beta_37 = dif_37*dt/(dx*dx)
         beta_36 = dif_36*dt/(dx*dx)
-    print dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36
-    return dif_40
+    return dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36
 
 #sets up a mesh for the model
 
@@ -109,54 +108,74 @@ def grid_maker():
 #sets up the boundary condition vector
 
 def BC_matrix_gen():
+    dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36 = diffusion_magnitudes()    
+    vis = dif_40
+    vis_sec = diff_36
     L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
-    D = diffusion_magnitudes()
-    a, b = np.split(D, 2)#spit D into a vis and avis_sec array
-    vis_values = a[0]
-    vis_sec_values = b[0]
-    #interate of vis and vis_sec arrays
-#bc is a coefficent matrix for the implict scheme
-    bc = np.zeros([nx-2, 1])
-    bc_sec = np.zeros([nx-2, 1])
-    Dsp_matrix = []
-    D_secsp_matrix = []
-    bc_matrix = []
-    #bc_matrix = np.empty([len(vis_values), 1])
-    bc_sec_matrix = []
-    #bc_sec_matrix = np.empty([len(vis_values), 1])
-# Neumann boundary conditions
-    counter = 0
-    for vis in vis_values:  
-        bc[0] = vis*dt*-UnL/(dx)
-        bc[nx-3] = vis*dt*UnR/(dx) 
-        bc = bc.T
-        A = np.delete(np.hstack((np.zeros([nx-2, 1]),np.identity(nx-2))), nx-2, 1)
-        B = A + A.transpose() - 2 * np.identity(nx-2)
-        B[0,0] = -1
-        B[nx-3,nx-3] = -1
-        D = np.identity(nx-2) - (vis*dt/dx**2)*B
-        Dsp = csr_matrix(np.identity(nx-2) - (vis*dt/dx**2)*B)
-        Dsp_matrix.append(Dsp) 
-        bc_matrix.append(bc)   
-        bc = bc.T
-        counter = counter + 1
-    counter = 0
-    for vis_sec in vis_sec_values:
-        bc_sec[0] = vis_sec*dt*-UnL/(dx) #N. B. C. left side
-        bc_sec[nx-3] = vis_sec*dt*UnR/(dx)#N. B. C. right side
-        bc_sec = bc_sec.T
-        A = np.delete(np.hstack((np.zeros([nx-2, 1]),np.identity(nx-2))), nx-2, 1)
-        B = A + A.transpose() - 2 * np.identity(nx-2)
-        B[0,0] = -1
-        B[nx-3,nx-3] = -1
-        D_sec = np.identity(nx-2) - (vis_sec*dt/dx**2)*B
-        D_secsp = csr_matrix(np.identity(nx-2) - (vis_sec*dt/dx**2)*B)
-        D_secsp_matrix.append(D_secsp)
-        bc_sec_matrix.append(bc_sec)
-        bc_sec = bc_sec.T
-    result = (bc_matrix, bc_sec_matrix, Dsp_matrix, D_secsp_matrix)
-    print 'boundary condition generated'    
-    return result
+    bc_40 = np.zeros([nx-2, 1])
+    bc_39 = np.zeros([nx-2, 1])
+    bc_38 = np.zeros([nx-2, 1])
+    bc_37 = np.zeros([nx-2, 1])
+    bc_36 = np.zeros([nx-2, 1])
+    #Dirichlet boundary conditions
+    #bc_40[0] = dif_40*dt*UL/(dx**2)
+    #bc_39[0] = dif_39*dt*UL/(dx**2)
+    #bc_38[0] = dif_38*dt*UL/(dx**2)
+    #bc_37[0] = dif_37*dt*UL/(dx**2)
+    #bc_36[0] = dif_36*dt*UL/(dx**2)
+    #bc_40[nx-3] = dif_40*dt*UR/(dx**2)
+    #bc_39[nx-3] = dif_39*dt*UR/(dx**2)
+    #bc_38[nx-3] = dif_38*dt*UR/(dx**2)
+    #bc_37[nx-3] = dif_37*dt*UR/(dx**2)
+    #bc_36[nx-3] = dif_36*dt*UR/(dx**2)
+    #bc_40 = bc_40.T
+    #bc_39 = bc_39.T
+    #bc_38 = bc_38.T
+    #bc_37 = bc_37.T
+    #bc_36 = bc_36.T
+    #Neumann boundary conditions
+    bc_40[0] = dif_40*dt*-UnL/(dx) #sets N. B. C. left side (40Ar)
+    bc_39[0] = dif_39*dt*-UnL/(dx) #sets N. B. C. left side (39Ar)
+    bc_38[0] = dif_38*dt*-UnL/(dx) #sets N. B. C. left side (38Ar)
+    bc_37[0] = dif_37*dt*-UnL/(dx) #sets N. B. C. left side (37Ar)
+    bc_36[0] = dif_36*dt*-UnL/(dx) #sets N. B. C. left side (36Ar)
+    bc_40[nx-3] = dif_40*dt*UnR/(dx) #sets N. B. C. right side (40Ar)
+    bc_39[nx-3] = dif_39*dt*UnR/(dx)#sets N. B. C. right side (39Ar)
+    bc_38[nx-3] = dif_38*dt*UnR/(dx)#sets N. B. C. right side (39Ar)
+    bc_37[nx-3] = dif_37*dt*UnR/(dx)#sets N. B. C. right side (39Ar)
+    bc_36[nx-3] = dif_36*dt*UnR/(dx)#sets N. B. C. right side (39Ar)
+    bc_40 = bc_40.T
+    bc_39 = bc_39.T
+    bc_38 = bc_38.T
+    bc_37 = bc_37.T
+    bc_36 = bc_36.T
+    #calculates the coefficent matrix for the implicent scheme. 
+    A = np.delete(np.hstack((np.zeros([nx-2, 1]),np.identity(nx-2))), nx-2, 1)
+    # Dirichlet B.C.s calcs
+    #B = A + A.transpose() - 2 * np.identity(nx-2)
+    #D_40 = np.identity(nx-2) - (dif_40*dt/dx**2)*B
+    #D_39 = np.identity(nx-2) - (dif_39*dt/dx**2)*B
+    #D_38 = np.identity(nx-2) - (dif_38*dt/dx**2)*B
+    #D_37 = np.identity(nx-2) - (dif_37*dt/dx**2)*B
+    #D_36 = np.identity(nx-2) - (dif_36*dt/dx**2)*B
+    #D_40_sp = csr_matrix(np.identity(nx-2) - (dif_40*dt/dx**2)*B)
+    #D_39_sp = csr_matrix(np.identity(nx-2) - (dif_39*dt/dx**2)*B)
+    #D_38_sp = csr_matrix(np.identity(nx-2) - (dif_38*dt/dx**2)*B)
+    #D_37_sp = csr_matrix(np.identity(nx-2) - (dif_37*dt/dx**2)*B)
+    #D_36_sp = csr_matrix(np.identity(nx-2) - (dif_36*dt/dx**2)*B)
+    # Neumann B. C. s calcs
+    B = A + A.transpose() - 2 * np.identity(nx-2)
+    B[0,0] = -1
+    B[nx-3,nx-3] = -1
+    D_40 = np.identity(nx-2) - (dif_40*dt/dx**2)*B
+    D_39 = np.identity(nx-2) - (dif_39*dt/dx**2)*B
+    D_38 = np.identity(nx-2) - (dif_38*dt/dx**2)*B
+    D_37 = np.identity(nx-2) - (dif_37*dt/dx**2)*B
+    D_36 = np.identity(nx-2) - (dif_36*dt/dx**2)*B
+    D_40_sp = csr_matrix(np.identity(nx-2) - (dif_40*dt/dx**2)*B)
+    D_39_sp = csr_matrix(np.identity(nx-2) - (dif_39*dt/dx**2)*B)
+    D_38_sp = csr_matrix(np.identity(nx-2) - (dif_38*dt/dx**2)*B)
+    D_37_sp = csr_matrix(np.identity(nx-2) - (dif_37*dt/dx**2)*B)
+    D_36_sp = csr_matrix(np.identity(nx-2) - (dif_36*dt/dx**2)*B)
+    return D_40_sp, D_39_sp, D_38_sp, D_37_sp, D_36_sp, bc_40, bc_39, bc_38, bc_37, bc_36
 
-result = BC_matrix_gen()
-print result
