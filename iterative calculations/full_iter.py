@@ -10,6 +10,8 @@ import matplotlib as pp
 #from Parameters import dx, L, nx
 from scipy import shape
 from scipy.sparse import csr_matrix
+import scipy as sp
+from scipy.sparse import csr_matrix, linalg
 
 #dynamic model parameters; creates the set of pressure and temperature values to use to calculate D. 
 
@@ -46,9 +48,9 @@ def static_parameters():
     #Number of steps in space
     nx = 100
     #Number of steps in time
-    nt = 9999999
+    nt = 100000
     #Width of the time step (what are the units for this?)
-    dt = 1
+    dt = 10
     #Width of the space step
     dx = L / ( nx - 1.0 )
     #Left Dirichlet B.C. (y'' + y = 0)
@@ -79,8 +81,7 @@ def grid_maker():
     return gridx
 #sets up the boundary condition vector
 
-def BC_matrix_gen():
-    dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36 = diffusion_magnitudes()    
+def BC_matrix_gen(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36):  
     L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
     bc_40 = np.zeros([nx-2, 1])
     bc_39 = np.zeros([nx-2, 1])
@@ -167,12 +168,13 @@ def initial_condition():
     condition[:, 0] = np.array(gridu)
     return condition
 
-print initial_condition()
-#calculation set
+#calculation
 
-def Calculator(Dsp, bc, nx, nt, UL, UR, dx, UnL, UnR, dt):
+def Calculator(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36):#what is beta for? I should remove it...
     L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
-    D_40_sp, D_39_sp, D_38_sp, D_37_sp, D_36_sp, bc_40, bc_39, bc_38, bc_37, bc_36 = BC_matrix_gen()
+    D_40_sp, D_39_sp, D_38_sp, D_37_sp, D_36_sp, bc_40, bc_39, bc_38, bc_37, bc_36 = BC_matrix_gen(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36)
+    Dsp = D_40_sp#temporary until I add the rest of the diffusivities to the calculation
+    bc = bc_40#temporary until I add the rest of the bc vectors to the calculation
     condition = initial_condition()
     u = (condition[:, 0])
     for timestep in range(0, nt):
@@ -188,6 +190,7 @@ def Calculator(Dsp, bc, nx, nt, UL, UR, dx, UnL, UnR, dt):
         U = sp.sparse.linalg.spsolve(Dsp, U.T).T
         u = np.append(np.append(U, UR)[::-1], UL)[::-1]
         #u = np.append(np.append(U, U[0]-UnL*dx)[::-1], U[nx-3]+UnR*dx)[::-1]
+    print "calculated"
     return (u, nt * dt)
 
 #iterator and plotting function
@@ -218,4 +221,6 @@ def diffusion_magnitudes():
         beta_37 = dif_37*dt/(dx*dx)
         beta_36 = dif_36*dt/(dx*dx)
         u, time_to_stop = Calculator(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36)
-    return dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38, beta_37, beta_36
+        print time_to_stop
+
+diffusion_magnitudes()
