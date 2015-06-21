@@ -16,9 +16,9 @@ from scipy.sparse import csr_matrix, linalg
 #dynamic model parameters; creates the set of pressure and temperature values to use to calculate D. 
 
 def temperature_set():
-    temperature_low = 900
-    temperature_high = 1100
-    temperature_increment = 25
+    temperature_low = 1100
+    temperature_high = 1200
+    temperature_increment = 20
     temperature_vector = np.asarray(range(temperature_low, temperature_high, temperature_increment))
     return temperature_vector
 
@@ -46,9 +46,9 @@ def static_parameters():
     #Length of System (meters)
     L = 0.00169
     #Number of steps in space
-    nx = 100
+    nx = 80
     #Number of steps in time
-    nt = 100000
+    nt = 1000000
     #Width of the time step (what are the units for this?)
     dt = 10
     #Width of the space step
@@ -180,7 +180,7 @@ def Calculator(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38
     for timestep in range(0, nt):
         #print timestep
         if u[5] + u[1]/100. > u[nx-9] - u[nx-9]/100.:
-            #print 'Runtime to equilibrium is ', timestep*dt, ' seconds ', 'or ', timestep*dt/60./60., ' hours.'
+            print 'Runtime to equilibrium is ', timestep*dt, ' seconds ', 'or ', timestep*dt/60./60., ' hours.'
         #if u[1] > 0.00001:
         #    print 'Optimal runtime is', timestep*dt, 'seconds.'
             return (u, timestep * dt)
@@ -190,7 +190,7 @@ def Calculator(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38
         U = sp.sparse.linalg.spsolve(Dsp, U.T).T
         u = np.append(np.append(U, UR)[::-1], UL)[::-1]
         #u = np.append(np.append(U, U[0]-UnL*dx)[::-1], U[nx-3]+UnR*dx)[::-1]
-    print "calculated"
+    print "alloted computation time exceeded"
     return (u, nt * dt)
 
 #iterator and plotting function
