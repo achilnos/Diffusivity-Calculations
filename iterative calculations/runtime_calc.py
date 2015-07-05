@@ -14,13 +14,13 @@ import scipy as sp
 from scipy.sparse import csr_matrix, linalg
 import csv
 import math
-
+from matplotlib.mlab import griddata
 #dynamic model parameters; creates the set of pressure and temperature values to use to calculate D. 
 
 def temperature_set():
     temperature_low = 900
     temperature_high = 1200
-    temperature_increment = 20
+    temperature_increment = 1
     temperature_vector = np.asarray(range(temperature_low, temperature_high, temperature_increment))
     return temperature_vector
 
@@ -193,12 +193,15 @@ def Calculator(dif_40, dif_39, dif_38, dif_37, dif_36, beta_40, beta_39, beta_38
 #for the given input of pressure and temperature, finds a value of viscosity
 
 def diffusion_magnitudes():
+    T_vector = []
+    P_vector = []
+    time_vector = []
     with open('200_10.txt', 'wb') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=' ')
         L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
         temperatures, pressures = conditions_set()
         #Water Concentration (weight percent)
-        W = 0.04#RLS-41
+        W = 0.3#RLS-41
         #mass slection coefficent
         E = 0.43
         for i in range(len(temperatures)):
@@ -247,8 +250,25 @@ def diffusion_magnitudes():
             runtime = ":".join(runtime)
             output = dif_pri, T, P, seconds, minutes, hours, runtime 
             output = ','.join(output)
-            print output
-            spamwriter.writerow(output)
+            print 'diffusion coefficent is ', dif_pri, 'meters squared per seconds', 'temperature is ', T, 'Celcius', 'pressure is ', P, 'MPa', 'runtime is', seconds, 'seconds', minutes, 'minutes', hours, 'hours', runtime, 'HH:MM:SS' 
+            T_vector.append(T)
+            P_vector.append(P)
+            time_vector.append(str(float(seconds)/60./60.))#in hours
+            spamwriter.writerow(output) 
+        return T_vector, P_vector, time_vector
 
-#plotting step here
-diffusion_magnitudes()
+#Plots as colormap
+def Plot_as_cm():
+    T, P, time = diffusion_magnitudes()
+    x_vals = np.linspace(900, 1200, num = 500)#temperature
+    y_vals = np.linspace(50, 100, num = 500)#pressure
+    z_vals = griddata(T, P, time, x_vals, y_vals, interp='linear')
+    #CS = plt.contour(x_vals, y_vals, z_vals, 100, linewidths=0.5, colors='k')
+    CS = plt.contourf(x_vals, y_vals, z_vals, 100, cmap=plt.cm.rainbow,
+                  vmax=abs(z_vals).max(), vmin=-abs(z_vals).max())
+    plt.title('Runtime as a function of T, P')
+    plt.colorbar()
+    plt.ylabel('pressure MPa')
+    plt.xlabel('temperature Celcius')
+    plt.show()
+Plot_as_cm()
