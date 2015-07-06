@@ -18,7 +18,7 @@ from matplotlib.mlab import griddata
 #dynamic model parameters; creates the set of pressure and temperature values to use to calculate D. 
 
 def temperature_set():
-    temperature_low = 900
+    temperature_low = 1000
     temperature_high = 1200
     temperature_increment = 1
     temperature_vector = np.asarray(range(temperature_low, temperature_high, temperature_increment))
@@ -196,12 +196,13 @@ def diffusion_magnitudes():
     T_vector = []
     P_vector = []
     time_vector = []
-    with open('200_10.txt', 'wb') as csvfile:
+    diff_vector = []
+    with open('W0point15.txt', 'wb') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=' ')
         L, nx, nt, dt, dx, UL, UR, UnL, UnR = static_parameters()
         temperatures, pressures = conditions_set()
         #Water Concentration (weight percent)
-        W = 0.3#RLS-41
+        W = 0.1#RLS-41
         #mass slection coefficent
         E = 0.43
         for i in range(len(temperatures)):
@@ -211,6 +212,7 @@ def diffusion_magnitudes():
             P = pressures[i]
             #diffusivities for 40Ar, 39Ar, 38Ar, 37Ar, 36Ar
             dif_40 = (np.exp((14.627-17913/T-2.569*P/T)+(35936/T+27.42*P/T)*W))*10**-12
+            #dif_40 = W*np.power(10.0,-14.0)
             dif_39 = dif_40*(40.0/39.0)**(E/2.0)
             dif_38 = dif_40*(40.0/38.0)**(E/2.0)
             dif_37 = dif_40*(40.0/37.0)**(E/2.0)
@@ -253,14 +255,19 @@ def diffusion_magnitudes():
             print 'diffusion coefficent is ', dif_pri, 'meters squared per seconds', 'temperature is ', T, 'Celcius', 'pressure is ', P, 'MPa', 'runtime is', seconds, 'seconds', minutes, 'minutes', hours, 'hours', runtime, 'HH:MM:SS' 
             T_vector.append(T)
             P_vector.append(P)
+            diff_vector.append(dif_pri)
             time_vector.append(str(float(seconds)/60./60.))#in hours
             spamwriter.writerow(output) 
-        return T_vector, P_vector, time_vector
+        return T_vector, P_vector, time_vector, diff_vector
 
 #Plots as colormap
 def Plot_as_cm():
-    T, P, time = diffusion_magnitudes()
-    x_vals = np.linspace(900, 1200, num = 500)#temperature
+    T, P, time, diff = diffusion_magnitudes()
+    np.savetxt('W0point1_T.txt', T, fmt='%04s')
+    np.savetxt('W0point1_P.txt', P, fmt='%04s')
+    np.savetxt('W0point1_time.txt', time, fmt='%04s')
+    np.savetxt('W0point1_diff.txt', time, fmt='%04s')
+    x_vals = np.linspace(1000, 1200, num = 500)#temperature
     y_vals = np.linspace(50, 100, num = 500)#pressure
     z_vals = griddata(T, P, time, x_vals, y_vals, interp='linear')
     #CS = plt.contour(x_vals, y_vals, z_vals, 100, linewidths=0.5, colors='k')
