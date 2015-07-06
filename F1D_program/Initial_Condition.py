@@ -1,4 +1,4 @@
-#Initial_Condition_iter.py
+#Initial_Condition.py
 from scipy import shape
 from Grid import gridx
 from Parameters import nx, dx, L

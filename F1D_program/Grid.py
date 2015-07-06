@@ -1,4 +1,4 @@
-#Grid_iter.py
+#Grid.py
 #This script defines the grid for F1D
 #It imports "dx" from the F1D_Parameters module and uses a decimal range function to generate the grid and place this string into "grid". Formats the numbers to display as exponentials if very small. 
 

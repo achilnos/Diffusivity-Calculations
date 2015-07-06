@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.animation as animation
 from Parameters import nx, nt, UL, UR, dx, UnL, UnR, dt
-from BC_Vector import Dsp, bc
+from BC_Vector import Dsp, bc, D_secsp, bc_sec
 from Initial_Condition import condition
 import scipy as sp
 from scipy.sparse import csr_matrix, linalg
